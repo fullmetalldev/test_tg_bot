@@ -1,14 +1,16 @@
-from xmlrpc.client import Boolean
+from dotenv import load_dotenv
+import os
 import json
-
 import requests
 from typing import Final
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, ContextTypes, filters, ConversationHandler, MessageHandler, \
     CallbackQueryHandler
 
-Token: Final = "7582061477:AAGPC4RBYfRKFqHlfpviYuCBXWheVRvtrl4"
-Bot_username: Final = "@ttttoDoBot"
+
+load_dotenv()
+Token: Final = os.getenv("TOKEN")
+Bot_username: Final = os.getenv("BOT_USERNAME")
 
 base_url = 'https://node-js-test-six.vercel.app'
 TITLE, DESCRIPTION = range(2)
