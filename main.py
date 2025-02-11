@@ -52,8 +52,9 @@ async def mark_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if response.status_code == 200:
         await context.bot.send_message(
             update.callback_query.message.chat_id,
-            "Task updated successfully!",
+            "Task updated successfully! Fetching updated list...",
         )
+        await get_all_tasks(update.callback_query, context)
     else:
         await context.bot.send_message(
             update.callback_query.message.chat_id,
@@ -61,17 +62,30 @@ async def mark_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def clear_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(update.message.message_id)
+    for i in range(update.message.message_id, 0, -1):
+       try:
+           await context.bot.deleteMessage(update.message.chat_id, i)
+       except:
+           break
+    return
+
+
 async def get_all_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text('Fetching tasks list...')
     tasks = getAllTasks()
+    await clear_chat(update, context)
     if tasks:
         message = "Here are all the tasks:\n\n"
         keyboard = []
 
         for index, item in enumerate(tasks):
-            status_icon = "❎" if item["status"] != True else "✅"
+            mark_status = "Completed" if item["status"] != True else "Not Completed"
+            status_icon = "Not completed ❎" if item["status"] != True else "Completed ✅"
             message += f"{index + 1}. <b>{item['title']}</b>\n<em>{item['description']}\nStatus: {status_icon}</em>\n\n"
 
-            keyboard.append([InlineKeyboardButton(f"{status_icon} Mark {index + 1}",
+            keyboard.append([InlineKeyboardButton(f"{index + 1}. Mark {mark_status}",
                                                   callback_data=f"mark_{item['_id']}_{item['status']}")])
 
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -86,9 +100,11 @@ async def get_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "title": context.user_data["title"],
         "description": context.user_data["description"],
     }
-    response = requests.post(base_url + '/addTask', body, headers)
+    body_json = json.dumps(body)
+    response = requests.post(base_url + '/addTask', body_json, headers=headers)
     if response.status_code == 200:
         await update.message.reply_text("Task added successfully.")
+        await get_all_tasks(update, context)
         return ConversationHandler.END
     else:
         await update.message.reply_text("Something went wrong.")
